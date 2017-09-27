@@ -49,7 +49,7 @@ module Jekyll
         results = []
         cmd = 'git shortlog -se HEAD'
         cmd << " -- #{file}" if file
-        result = %x{ #{cmd} }
+        result = %x{ #{cmd} }.scrub
         result.lines.each do |line|
           commits, name, email = line.scan(/(.*)\t(.*)<(.*)>/).first.map(&:strip)
           results << { 'commits' => commits.to_i, 'name' => name, 'email' => email }
@@ -60,7 +60,7 @@ module Jekyll
       def lines(file = nil)
         cmd = "git log --numstat --format=%h"
         cmd << " -- #{file}" if file
-        result = %x{ #{cmd} }
+        result = %x{ #{cmd} }.scrub
         results = result.scan(/(.*)\n\n((?:.*\t.*\t.*\n)*)/)
         results.map do |line|
           files = line[1].scan(/(.*)\t(.*)\t(.*)\n/)
@@ -73,7 +73,7 @@ module Jekyll
       end
 
       def commit(sha)
-        result = %x{ git show --format=fuller --name-only #{sha} }
+        result = %x{ git show --format=fuller --name-only #{sha} }.scrub
         long_sha, author_name, author_email, author_date, commit_name, commit_email, commit_date, message, changed_files = result.scan(/commit (.*)\nAuthor:(.*)<(.*)>\nAuthorDate:(.*)\nCommit:(.*)<(.*)>\nCommitDate:(.*)\n\n((?:\s\s\s\s[^\r\n]*\n)*)\n(.*)/m).first.map(&:strip)
         {
           'short_sha' => sha,
@@ -90,11 +90,11 @@ module Jekyll
       end
 
       def tracked_files
-        @tracked_files ||= %x{ git ls-tree --full-tree -r --name-only HEAD }.split("\n")
+        @tracked_files ||= %x{ git ls-tree --full-tree -r --name-only HEAD }.scrub.split("\n")
       end
 
       def project_name
-        File.basename(%x{ git rev-parse --show-toplevel }.strip)
+        File.basename(%x{ git rev-parse --show-toplevel }.scrub.strip)
       end
 
       def files_count
